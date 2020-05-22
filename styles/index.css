@@ -1,0 +1,112 @@
+body {
+  background-color: var(--background);
+}
+.header {
+  padding: 20px 20px 20px 40px;
+  color: var(--text-light);
+  background-image: linear-gradient(
+    170deg,
+    var(--header_grad_start) 0%,
+    var(--header_grad_end) 100%
+  );
+  font-size: 2em;
+  font-weight: 300;
+}
+
+.code-link {
+  float: right;
+}
+
+.code-link:focus,
+.code-link:hover {
+  color: var(--highlight);
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+}
+
+.dashboard {
+  width: 1280px;
+  margin: auto;
+}
+
+.content {
+  margin: 10px 10px 0 0;
+  padding: 5px;
+  border-radius: 5px;
+  background-color: var(--content-background);
+  box-shadow: 0 5px 30px -15px rgba(0, 0, 0, 0.2);
+}
+
+.chart-title {
+  font-size: 1.35em;
+  padding: 10px 0 15px 20px;
+}
+
+.sub-title {
+  font-size: 0.75em;
+  color: var(--grey);
+}
+
+/* Delinquency Bar */
+#delinquency_bar {
+  display: inline-block;
+  width: fit-content;
+}
+
+#delinquency_bar svg {
+  margin-right: -20px;
+}
+
+/* Systemsize Pie */
+#systemsize_pie {
+  display: inline-block;
+  width: fit-content;
+}
+
+#systemsize_pie svg {
+  margin-right: -10px;
+}
+
+/* Programfee Row Chart */
+#programfee_rows {
+  display: inline-block;
+  width: fit-content;
+}
+
+#programfee_rows svg {
+  margin-right: -20px;
+}
+
+/* Data Grid */
+.grid-title {
+  display: inline-block;
+  padding: 20px 0 0 0px;
+}
+
+#grid_content {
+  padding: 0 20px 1px;
+}
+
+#grid_paging {
+  float: right;
+  padding: 10px 0;
+}
+
+#paging_meta {
+  display: inline-block;
+  width: 180px;
+}
+
+#grid_last {
+  margin-right: 5px;
+}
+
+#grid_next:focus,
+#grid_last:focus {
+  outline: none;
+}
+
+.wrapper {
+  background-color: black;
+  padding: 2em;
+}

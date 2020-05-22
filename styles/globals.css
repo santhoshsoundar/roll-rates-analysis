@@ -1,0 +1,19 @@
+:root {
+  --text-black: #000;
+  --text-light: #dddddd;
+  --dark-grey: #3a3a3a;
+  --grey: #7a7a7a;
+  --light-grey: #e5e5e5;
+  --highlight: #1e90ff;
+  --accent: #f58320;
+  --background: #f4f7f9;
+  --content-background: #fff;
+  --header_grad_start: #212a39;
+  --header_grad_end: #181e28;
+  --content-width: 52em;
+  --content-padding: 0.5em 2em;
+  --content-border-rad: 1em;
+  --sidebar-width: 20em;
+  --default-font: 16px;
+  --smaller-font: 12px;
+}

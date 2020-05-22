@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+
+    <!-- Custom Styles & Chart Styles-->
+    <link rel="stylesheet" type="text/css" href="./styles/dc.css" />
+    <link rel="stylesheet" type="text/css" href="./styles/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="./styles/globals.css" />
+    <link rel="stylesheet" type="text/css" href="./styles/index.css" />
+
+    <!-- Charting and filtering library -->
+    <script src="./external_libs/d3.js"></script>
+    <script src="./external_libs/crossfilter.js"></script>
+    <script src="./external_libs/dc.js"></script>
+    <script src="./external_libs/reductio.js"></script>
+    <script src="./external_libs/universe.js"></script>
+    <!-- end -->
+    <title>Loanpal - Roll Rates</title>
+  </head>
+
+  <body>
+    <div class="header">
+      <span>Loan<strong>Pal</strong> - Delinquency Roll Rates</span>
+      <a
+        class="code-link"
+        target="blank"
+        href="https://github.com/santhoshsoundar/roll-rates-analysis"
+        >GitHub</a
+      >
+    </div>
+    <div class="dashboard">
+      <div id="delinquency_bar" class="content">
+        <div class="chart-title">
+          Binned Delinquent Loans Count
+          <span class="sub-title">[Count - pow(exp:0.4)]</span>
+        </div>
+      </div>
+
+      <div id="systemsize_pie" class="content">
+        <div class="chart-title">System Size Count By Bins</div>
+      </div>
+
+      <div id="programfee_rows" , class="content">
+        <div class="chart-title">Program Fee Count By Bins</div>
+      </div>
+
+      <div id="grid_content" class="content">
+        <div class="chart-title grid-title">Cohort Level Roll Rate</div>
+        <div id="grid_paging">
+          <span id="paging_meta">
+            Showing <span id="grid_begin"></span>-<span id="grid_end"></span> of
+            <span id="grid_size"></span> <span id="grid_totalsize"></span>
+          </span>
+          <input
+            id="grid_last"
+            class="btn"
+            type="Button"
+            value="Last"
+            onclick="javascript:last()"
+          />
+          <input
+            id="grid_next"
+            class="btn"
+            type="button"
+            value="Next"
+            onclick="javascript:next()"
+          />
+        </div>
+        <table id="data_grid" class="table table-striped"></table>
+      </div>
+    </div>
+
+    <script>
+      var delinquencyBinBar = new dc.BarChart("#delinquency_bar");
+      var systemsizePie = new dc.PieChart("#systemsize_pie");
+      var programfeeRows = new dc.RowChart("#programfee_rows");
+      var dataGrid = new dc.DataTable("#data_grid");
+
+      var ndx;
+      d3.csv("roll-rates-data.csv").then(function (rollRateData) {
+        rollRateData.forEach(function (d) {
+          d.total_funded_loans = +d.total_funded_loans;
+          d.total_serv_loans = +d.total_serv_loans;
+          d.loans_by_delinquency = +d.loans_by_delinquency;
+          d.roll_rate_pct = +d.roll_rate_pct;
+        });
+
+        ndx = crossfilter(rollRateData);
+
+        // Binned Delinquent Loans Count
+        var delinquencyBinDim = ndx.dimension(function (d) {
+          return d.delinquency_bin;
+        });
+        var delinquent_group = delinquencyBinDim
+          .group()
+          .reduceSum(function (d) {
+            return d.loans_by_delinquency;
+          });
+        var yAxisDomain = d3.extent(delinquent_group.all(), (d) => +d.value);
+
+        delinquencyBinBar
+          .width(550)
+          .height(220)
+          .x(d3.scaleBand())
+          .xUnits(dc.units.ordinal)
+          .xAxisLabel("Delinquency Bins")
+          .y(d3.scalePow().exponent(0.6).domain(yAxisDomain))
+          .yAxisLabel("Count")
+          .elasticY(true)
+          .renderHorizontalGridLines(true)
+          .renderVerticalGridLines(true)
+          .dimension(delinquencyBinDim)
+          .barPadding(0.1)
+          .outerPadding(0.05)
+          .group(delinquent_group);
+
+        delinquencyBinBar.on("pretransition", function (barChart) {
+          barChart.select("g").attr("transform", "translate(10,0)");
+        });
+
+        // System Size
+        var systemsizeDimension = ndx.dimension(function (d) {
+          return d.systemsize_bin;
+        });
+        var systemsizeGroup = systemsizeDimension.group().reduceCount();
+        systemsizePie
+          .width(352)
+          .height(220)
+          .innerRadius(40)
+          .cx(220)
+          .cy(110)
+          .dimension(systemsizeDimension)
+          .group(systemsizeGroup)
+          .legend(dc.legend().highlightSelected(true));
+
+        d3.select("#systemsize_pie > svg > g").attr(
+          "transform",
+          "translate(80,0)"
+        );
+
+        systemsizePie.on("pretransition", function (pieChart) {
+          pieChart
+            .selectAll(".dc-legend")
+            .attr("transform", "translate(20,80)");
+
+          pieChart
+            .selectAll(".dc-legend")
+            .append("g")
+            .attr("transform", "translate(15,-20)")
+            .append("text")
+            .text("Bins")
+            .append("tspan")
+            .attr("x", 40)
+            .text("Count");
+
+          pieChart
+            .selectAll(".dc-legend-item text")
+            .text("")
+            .append("tspan")
+            .text(function (d) {
+              return d.name;
+            })
+            .append("tspan")
+            .attr("x", 80)
+            .attr("text-anchor", "end")
+            .text(function (d) {
+              return d.data;
+            });
+        });
+
+        // Program Fee
+        var programfeeDimension = ndx.dimension(function (d) {
+          return d.programfee_bin;
+        });
+        var programfeeGroup = programfeeDimension.group().reduceCount();
+        programfeeRows
+          .width(360)
+          .height(220)
+          .elasticX(true)
+          .dimension(programfeeDimension)
+          .group(programfeeGroup);
+
+        // Table - Data Grid
+        var gridDimension = ndx.dimension(function (d) {
+          return [d.fund_month, d.state, d.delinquency_bin];
+        });
+        dataGrid
+          .dimension(gridDimension)
+          .size(Infinity)
+          .showSections(false)
+          .columns([
+            "fund_month",
+            "state",
+            "systemsize_bin",
+            "programfee_bin",
+            "delinquency_bin",
+            "loans_by_delinquency",
+            "roll_rate_pct",
+          ])
+          .sortBy(function (d) {
+            return [d.fund_month, d.state, d.delinquency_bin];
+          })
+          .order(d3.ascending)
+          .on("preRender", update_offset)
+          .on("preRedraw", update_offset)
+          .on("pretransition", display);
+
+        dc.renderAll();
+      });
+
+      // grid pagination control methods
+      var ofs = 0,
+        pag = 13;
+
+      function update_offset() {
+        var totFilteredRecs = ndx.groupAll().value();
+        var end = ofs + pag > totFilteredRecs ? totFilteredRecs : ofs + pag;
+        ofs =
+          ofs >= totFilteredRecs
+            ? Math.floor((totFilteredRecs - 1) / pag) * pag
+            : ofs;
+        ofs = ofs < 0 ? 0 : ofs;
+
+        dataGrid.beginSlice(ofs);
+        dataGrid.endSlice(ofs + pag);
+      }
+      function display() {
+        var totFilteredRecs = ndx.groupAll().value();
+        var end = ofs + pag > totFilteredRecs ? totFilteredRecs : ofs + pag;
+        d3.select("#grid_begin").text(end === 0 ? ofs : ofs + 1);
+        d3.select("#grid_end").text(end);
+        d3.select("#grid_last").attr("disabled", ofs - pag < 0 ? "true" : null);
+        d3.select("#grid_next").attr(
+          "disabled",
+          ofs + pag >= totFilteredRecs ? "true" : null
+        );
+        d3.select("#grid_size").text(totFilteredRecs);
+        if (totFilteredRecs != ndx.size()) {
+          d3.select("#grid_totalsize").text(
+            "(filtered Total: " + ndx.size() + " )"
+          );
+        } else {
+          d3.select("#grid_totalsize").text("");
+        }
+      }
+      function next() {
+        ofs += pag;
+        update_offset();
+        dataGrid.redraw();
+      }
+      function last() {
+        ofs -= pag;
+        update_offset();
+        dataGrid.redraw();
+      }
+    </script>
+  </body>
+</html>
