@@ -39,6 +39,7 @@
         <div class="filter-block">
           <span class="reset filter-indicator" style="visibility: hidden;">
             Current filter: <span class="filter"></span>
+            <span class="sub-text"> view table for % values</span>
           </span>
           <div
             class="reset reset-btn"
@@ -221,8 +222,8 @@
           legend_height = 220;
         var projection = d3
           .geoAlbersUsa()
-          .scale(780)
-          .translate([map_width / 2 - legend_width / 2, map_height / 2]);
+          .scale(840)
+          .translate([map_width / 2 - legend_width / 2.5, map_height / 2]);
 
         var quantizeColorScale = d3
           .scaleQuantize()

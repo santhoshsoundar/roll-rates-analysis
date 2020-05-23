@@ -47,6 +47,11 @@ body {
   color: var(--grey);
 }
 
+.sub-text {
+  font-size: 0.85em;
+  color: var(--grey);
+}
+
 .reset-btn {
   float: right;
   margin-right: 10px;
