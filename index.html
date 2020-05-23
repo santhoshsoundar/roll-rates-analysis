@@ -33,35 +33,96 @@
     </div>
     <div class="dashboard">
       <div id="roll_rates_sunburst" class="content">
-        <div class="chart-title">Roll Rates By Cohort & Delinquency Bins</div>
+        <div class="chart-title">
+          Roll rates by Cohort and Delinquency category
+        </div>
+        <div class="filter-block">
+          <span class="reset filter-indicator" style="visibility: hidden;">
+            Current filter: <span class="filter"></span>
+          </span>
+          <div
+            class="reset reset-btn"
+            onclick="javascript:rollRatesSunburst.filterAll();dc.redrawAll();"
+            style="visibility: hidden;"
+          >
+            Reset Filter
+          </div>
+        </div>
       </div>
 
       <div id="us_chart" class="content">
-        <div class="chart-title">Loan Delinquency Count Across US</div>
-        <div id="state_map"></div>
-        <div
-          id="state_legend"
-          style="display: inline-block; width: fit-content;"
-        ></div>
+        <div class="chart-title"># of Delinquent loans across US</div>
+        <div id="state_map">
+          <div id="map-reset-block" class="filter-block">
+            <span class="reset filter-indicator" style="visibility: hidden;">
+              Current filter: <span class="filter"></span>
+            </span>
+            <div
+              class="reset reset-btn"
+              onclick="javascript:usChart.filterAll();dc.redrawAll();"
+              style="visibility: hidden;"
+            >
+              Reset Filter
+            </div>
+          </div>
+        </div>
+        <div id="state_legend"></div>
       </div>
 
       <div id="delinquency_bar" class="content">
         <div class="chart-title">
-          Binned Delinquent Loans Count
-          <span class="sub-title">[Count - pow(exp:0.4)]</span>
+          # of loans in delinquency category
+        </div>
+        <div class="filter-block">
+          <span class="reset filter-indicator" style="visibility: hidden;">
+            Current filter: <span class="filter"></span>
+          </span>
+          <div
+            class="reset reset-btn"
+            onclick="javascript:delinquencyBinBar.filterAll();dc.redrawAll();"
+            style="visibility: hidden;"
+          >
+            Reset Filter
+          </div>
         </div>
       </div>
 
       <div id="systemsize_pie" class="content">
-        <div class="chart-title">System Size Count By Bins</div>
+        <div class="chart-title"># of loans by System Size</div>
+        <div class="filter-block">
+          <span class="reset filter-indicator" style="visibility: hidden;">
+            Current filter: <span class="filter"></span>
+          </span>
+          <div
+            class="reset reset-btn"
+            onclick="javascript:systemsizePie.filterAll();dc.redrawAll();"
+            style="visibility: hidden;"
+          >
+            Reset Filter
+          </div>
+        </div>
       </div>
 
       <div id="programfee_rows" , class="content">
-        <div class="chart-title">Program Fee Count By Bins</div>
+        <div class="chart-title"># of loans by Program Fee</div>
+        <div class="filter-block">
+          <span class="reset filter-indicator" style="visibility: hidden;">
+            Current filter: <span class="filter"></span>
+          </span>
+          <div
+            class="reset reset-btn"
+            onclick="javascript:programfeeRows.filterAll();dc.redrawAll();"
+            style="visibility: hidden;"
+          >
+            Reset Filter
+          </div>
+        </div>
       </div>
 
       <div id="grid_content" class="content">
-        <div class="chart-title grid-title">Cohort Level Roll Rate</div>
+        <div class="chart-title grid-title">
+          Cohort Level Roll Rate Percentages
+        </div>
         <div id="grid_paging">
           <span id="paging_meta">
             Showing <span id="grid_begin"></span>-<span id="grid_end"></span> of
@@ -103,7 +164,7 @@
           d.total_funded_loans = +d.total_funded_loans;
           d.total_serv_loans = +d.total_serv_loans;
           d.loans_by_delinquency = +d.loans_by_delinquency;
-          d.roll_rate_pct = +d.roll_rate_pct;
+          d.roll_rate_pct = +d.roll_rate_pct + "%";
         });
 
         ndx = crossfilter(rollRateData);
@@ -129,13 +190,16 @@
         rollRatesSunburst
           .width(532)
           .height(400)
-          .innerRadius(100)
+          .innerRadius(60)
+          .controlsUseVisibility(true)
           .minAngleForLabel(0)
           .dimension(dim)
           .group(group)
           .valueAccessor(function (d) {
             return d.value.exceptionSum;
           });
+
+        rollRatesSunburst.ringSizes(rollRatesSunburst.equalRingSizes());
 
         // US Map of Delinquency Counts
         var statesDim = ndx.dimension(function (d) {
@@ -201,6 +265,7 @@
           .height(map_height)
           .dimension(statesDim)
           .group(stateLoansByDelinq)
+          .controlsUseVisibility(true)
           .colors(quantizeColorScale)
           .colorCalculator(function (d) {
             return d ? usChart.colors()(d) : "#ccc";
@@ -230,7 +295,6 @@
           .x(d3.scaleBand())
           .xUnits(dc.units.ordinal)
           .xAxisLabel("Delinquency Bins")
-          .y(d3.scalePow().exponent(0.6).domain(yAxisDomain))
           .yAxisLabel("Count")
           .elasticY(true)
           .renderHorizontalGridLines(true)
@@ -238,6 +302,7 @@
           .dimension(delinquencyBinDim)
           .barPadding(0.1)
           .outerPadding(0.05)
+          .controlsUseVisibility(true)
           .group(delinquent_group);
 
         delinquencyBinBar.on("pretransition", function (barChart) {
@@ -253,8 +318,10 @@
           .width(352)
           .height(220)
           .innerRadius(40)
+          .minAngleForLabel(0)
           .cx(220)
           .cy(110)
+          .controlsUseVisibility(true)
           .dimension(systemsizeDimension)
           .group(systemsizeGroup)
           .legend(dc.legend().highlightSelected(true));
@@ -303,6 +370,7 @@
           .width(360)
           .height(220)
           .elasticX(true)
+          .controlsUseVisibility(true)
           .dimension(programfeeDimension)
           .group(programfeeGroup);
 
@@ -314,6 +382,7 @@
           .dimension(gridDimension)
           .size(Infinity)
           .showSections(false)
+          .controlsUseVisibility(true)
           .columns([
             "fund_month",
             "state",
@@ -378,17 +447,6 @@
         ofs -= pag;
         update_offset();
         dataGrid.redraw();
-      }
-
-      //   map legend
-      function ramp(color, n = 256) {
-        const canvas = DOM.canvas(n, 1);
-        const context = canvas.getContext("2d");
-        for (let i = 0; i < n; ++i) {
-          context.fillStyle = color(i / (n - 1));
-          context.fillRect(i, 0, 1, 1);
-        }
-        return canvas;
       }
     </script>
   </body>
