@@ -53,14 +53,14 @@ body {
   text-align: center;
   padding: 3px 6px;
   max-width: 90px;
-  background-color: var(--light-grey);
+  background-color: var(--grey-highlight);
   border-radius: 5px;
   box-shadow: 0 5px 30px -15px rgba(0, 0, 0, 0.2);
 }
 
 .reset-btn:hover {
   cursor: pointer;
-  background-color: var(--grey-highlight);
+  background-color: var(--light-grey);
 }
 
 #map-reset-block {
