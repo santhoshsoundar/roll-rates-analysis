@@ -48,6 +48,23 @@ body {
 }
 
 /* Delinquency Bar */
+
+#us_chart,
+#state_map,
+#state_legend {
+  display: inline-block;
+  width: fit-content;
+}
+
+#state_legend {
+  margin-left: -140px;
+}
+
+.legendQuant text {
+  font-weight: 400;
+}
+
+/* Delinquency Bar */
 #delinquency_bar {
   display: inline-block;
   width: fit-content;

@@ -13,6 +13,7 @@
 
     <!-- Charting and filtering library -->
     <script src="./external_libs/d3.js"></script>
+    <script src="./external_libs/d3-legend.js"></script>
     <script src="./external_libs/crossfilter.js"></script>
     <script src="./external_libs/dc.js"></script>
     <script src="./external_libs/reductio.js"></script>
@@ -32,6 +33,15 @@
       >
     </div>
     <div class="dashboard">
+      <div id="us_chart" class="content">
+        <div class="chart-title">Loan Delinquency Count Across US</div>
+        <div id="state_map"></div>
+        <div
+          id="state_legend"
+          style="display: inline-block; width: fit-content;"
+        ></div>
+      </div>
+
       <div id="delinquency_bar" class="content">
         <div class="chart-title">
           Binned Delinquent Loans Count
@@ -74,13 +84,17 @@
     </div>
 
     <script>
+      var usChart = new dc.GeoChoroplethChart("#state_map");
       var delinquencyBinBar = new dc.BarChart("#delinquency_bar");
       var systemsizePie = new dc.PieChart("#systemsize_pie");
       var programfeeRows = new dc.RowChart("#programfee_rows");
       var dataGrid = new dc.DataTable("#data_grid");
 
       var ndx;
-      d3.csv("roll-rates-data.csv").then(function (rollRateData) {
+      Promise.all([
+        d3.csv("roll-rates-data.csv"),
+        d3.json("us-states.json"),
+      ]).then(function ([rollRateData, statesJson]) {
         rollRateData.forEach(function (d) {
           d.total_funded_loans = +d.total_funded_loans;
           d.total_serv_loans = +d.total_serv_loans;
@@ -89,6 +103,82 @@
         });
 
         ndx = crossfilter(rollRateData);
+
+        // US Map of Delinquency Counts
+        var statesDim = ndx.dimension(function (d) {
+          return d.state;
+        });
+
+        var stateLoansByDelinq = statesDim.group().reduceSum(function (d) {
+          return d.loans_by_delinquency;
+        });
+        var delqSumDomain = d3.extent(
+          stateLoansByDelinq.all(),
+          (d) => +d.value
+        );
+
+        var map_width = 740,
+          map_height = 400,
+          map_scale = 1,
+          legend_width = 100,
+          legend_height = 220;
+        var projection = d3
+          .geoAlbersUsa()
+          .scale(780)
+          .translate([map_width / 2 - legend_width / 2, map_height / 2]);
+
+        var quantizeColorScale = d3
+          .scaleQuantize()
+          .domain(delqSumDomain)
+          .range([
+            "#E2F2FF",
+            "#C4E4FF",
+            "#9ED2FF",
+            "#81C5FF",
+            "#6BBAFF",
+            "#51AEFF",
+            "#36A2FF",
+            "#1E96FF",
+            "#0089FF",
+            "#0061B5",
+          ]);
+
+        var legendSvg = d3
+          .select("#state_legend")
+          .append("svg")
+          .attr("width", legend_width)
+          .attr("height", legend_height);
+
+        legendSvg
+          .append("g")
+          .attr("class", "legendQuant")
+          .attr("transform", "translate(0,30)");
+
+        var legend = d3
+          .legendColor()
+          .labelFormat(d3.format(".0f"))
+          .title("Loan Counts")
+          .titleWidth(legend_width)
+          .scale(quantizeColorScale);
+
+        legendSvg.select(".legendQuant").call(legend);
+
+        usChart
+          .width(map_width)
+          .height(map_height)
+          .dimension(statesDim)
+          .group(stateLoansByDelinq)
+          .colors(quantizeColorScale)
+          .colorCalculator(function (d) {
+            return d ? usChart.colors()(d) : "#ccc";
+          })
+          .projection(projection)
+          .overlayGeoJson(statesJson.features, "state", function (d) {
+            return d.properties.name;
+          })
+          .title(function (d) {
+            return "State: " + d.key + "\nTotal Loan Count: " + d.value;
+          });
 
         // Binned Delinquent Loans Count
         var delinquencyBinDim = ndx.dimension(function (d) {
@@ -211,7 +301,7 @@
         dc.renderAll();
       });
 
-      // grid pagination control methods
+      // Grid pagination control methods
       var ofs = 0,
         pag = 13;
 
@@ -255,6 +345,17 @@
         ofs -= pag;
         update_offset();
         dataGrid.redraw();
+      }
+
+      //   map legend
+      function ramp(color, n = 256) {
+        const canvas = DOM.canvas(n, 1);
+        const context = canvas.getContext("2d");
+        for (let i = 0; i < n; ++i) {
+          context.fillStyle = color(i / (n - 1));
+          context.fillRect(i, 0, 1, 1);
+        }
+        return canvas;
       }
     </script>
   </body>
