@@ -17,7 +17,6 @@
     <script src="./external_libs/crossfilter.js"></script>
     <script src="./external_libs/dc.js"></script>
     <script src="./external_libs/reductio.js"></script>
-    <script src="./external_libs/universe.js"></script>
     <!-- end -->
     <title>Loanpal - Roll Rates</title>
   </head>
@@ -33,6 +32,10 @@
       >
     </div>
     <div class="dashboard">
+      <div id="roll_rates_sunburst" class="content">
+        <div class="chart-title">Roll Rates By Cohort & Delinquency Bins</div>
+      </div>
+
       <div id="us_chart" class="content">
         <div class="chart-title">Loan Delinquency Count Across US</div>
         <div id="state_map"></div>
@@ -84,6 +87,7 @@
     </div>
 
     <script>
+      var rollRatesSunburst = new dc.SunburstChart("#roll_rates_sunburst");
       var usChart = new dc.GeoChoroplethChart("#state_map");
       var delinquencyBinBar = new dc.BarChart("#delinquency_bar");
       var systemsizePie = new dc.PieChart("#systemsize_pie");
@@ -103,6 +107,39 @@
         });
 
         ndx = crossfilter(rollRateData);
+
+        // var dimension = ndx.dimension(function (d) {
+        //   return [d.category, d.sub_category];
+        // });
+
+        // Roll Rates Sunburst
+        var dim = ndx.dimension(function (d) {
+          return [d.fund_month, d.delinquency_bin];
+        });
+        var group = dim.group();
+
+        var reducer = reductio()
+          .exception(function (d) {
+            return d.delinquency_bin + d.fund_month + d.state;
+          })
+          .exceptionCount(true)
+          .exceptionSum(function (d) {
+            return d.loans_by_delinquency;
+          });
+
+        reducer(group);
+        console.log(group.top(Infinity));
+
+        rollRatesSunburst
+          .width(532)
+          .height(400)
+          .innerRadius(100)
+          .minAngleForLabel(0)
+          .dimension(dim)
+          .group(group)
+          .valueAccessor(function (d) {
+            return d.value.exceptionSum;
+          });
 
         // US Map of Delinquency Counts
         var statesDim = ndx.dimension(function (d) {
