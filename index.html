@@ -96,7 +96,7 @@
 
       var ndx;
       Promise.all([
-        d3.csv("roll-rates-data.csv"),
+        d3.csv("roll-rates-delq-data.csv"),
         d3.json("us-states.json"),
       ]).then(function ([rollRateData, statesJson]) {
         rollRateData.forEach(function (d) {
@@ -107,10 +107,6 @@
         });
 
         ndx = crossfilter(rollRateData);
-
-        // var dimension = ndx.dimension(function (d) {
-        //   return [d.category, d.sub_category];
-        // });
 
         // Roll Rates Sunburst
         var dim = ndx.dimension(function (d) {
